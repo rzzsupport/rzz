@@ -1,0 +1,165 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Remove old UI if exists
+local oldUI = PlayerGui:FindFirstChild("FreezeTradeUI")
+if oldUI then oldUI:Destroy() end
+
+-- Main UI
+local ScreenGui = Instance.new("ScreenGui", PlayerGui)
+ScreenGui.Name = "FreezeTradeUI"
+ScreenGui.ResetOnSpawn = false
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 300, 0, 330)
+Frame.Position = UDim2.new(0.5, -150, 0.5, -165)
+Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+
+-- Title
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Text = "❄️ Freeze Trade 🔍"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 22
+
+-- Search Box
+local SearchBox = Instance.new("TextBox", Frame)
+SearchBox.Size = UDim2.new(0.8, 0, 0, 30)
+SearchBox.Position = UDim2.new(0.1, 0, 0, 40)
+SearchBox.PlaceholderText = "🔍 Enter player name..."
+SearchBox.Text = ""
+SearchBox.Font = Enum.Font.SourceSans
+SearchBox.TextSize = 18
+SearchBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+SearchBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+
+-- Avatar + Name Display
+local Avatar = Instance.new("ImageLabel", Frame)
+Avatar.Size = UDim2.new(0, 100, 0, 100)
+Avatar.Position = UDim2.new(0.5, -50, 0, 80)
+Avatar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+Avatar.Image = ""
+
+local DisplayName = Instance.new("TextLabel", Frame)
+DisplayName.Size = UDim2.new(1, 0, 0, 30)
+DisplayName.Position = UDim2.new(0, 0, 0, 190)
+DisplayName.Text = ""
+DisplayName.TextColor3 = Color3.fromRGB(255, 255, 255)
+DisplayName.BackgroundTransparency = 1
+DisplayName.Font = Enum.Font.SourceSansBold
+DisplayName.TextSize = 20
+
+-- Freeze Button
+local FreezeButton = Instance.new("TextButton", Frame)
+FreezeButton.Size = UDim2.new(0.6, 0, 0, 40)
+FreezeButton.Position = UDim2.new(0.1, 0, 1, -90)
+FreezeButton.Text = "❄️ Freeze Victim"
+FreezeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+FreezeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FreezeButton.Font = Enum.Font.SourceSans
+FreezeButton.TextSize = 20
+
+-- Cooldown Label
+local CooldownLabel = Instance.new("TextLabel", Frame)
+CooldownLabel.Size = UDim2.new(0.2, 0, 0, 40)
+CooldownLabel.Position = UDim2.new(0.75, 0, 1, -90)
+CooldownLabel.Text = ""
+CooldownLabel.BackgroundTransparency = 1
+CooldownLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+CooldownLabel.Font = Enum.Font.SourceSans
+CooldownLabel.TextSize = 18
+
+-- Credits
+local Credits = Instance.new("TextLabel", Frame)
+Credits.Size = UDim2.new(1, 0, 0, 20)
+Credits.Position = UDim2.new(0, 0, 1, -25)
+Credits.Text = "CREDITS TO RZZTP"
+Credits.TextColor3 = Color3.fromRGB(200, 200, 200)
+Credits.BackgroundTransparency = 1
+Credits.Font = Enum.Font.SourceSansItalic
+Credits.TextSize = 16
+
+-- Freeze Function (Visual)
+local function freezeVictimScreen(victim)
+	if not victim or not victim:FindFirstChild("PlayerGui") then return end
+	local gui = victim:FindFirstChild("PlayerGui")
+
+	if gui:FindFirstChild("FrozenScreenUI") then
+		gui:FindFirstChild("FrozenScreenUI"):Destroy()
+	end
+
+	local freezeUI = Instance.new("ScreenGui", gui)
+	freezeUI.Name = "FrozenScreenUI"
+	freezeUI.IgnoreGuiInset = true
+	freezeUI.ResetOnSpawn = false
+
+	local block = Instance.new("Frame", freezeUI)
+	block.Size = UDim2.new(1, 0, 1, 0)
+	block.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	block.BackgroundTransparency = 0.4
+
+	local frozenText = Instance.new("TextLabel", block)
+	frozenText.Size = UDim2.new(1, 0, 0, 50)
+	frozenText.Position = UDim2.new(0, 0, 0.5, -25)
+	frozenText.Text = "You're Frozen!"
+	frozenText.TextColor3 = Color3.fromRGB(255, 255, 255)
+	frozenText.Font = Enum.Font.GothamBold
+	frozenText.TextScaled = true
+end
+
+-- Selected Player
+local selectedPlayer = nil
+
+-- Search Logic
+SearchBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed then
+		local input = SearchBox.Text:lower()
+		selectedPlayer = nil
+		for _, plr in pairs(Players:GetPlayers()) do
+			if plr.Name:lower():sub(1, #input) == input or plr.DisplayName:lower():sub(1, #input) == input then
+				selectedPlayer = plr
+				break
+			end
+		end
+
+		if selectedPlayer then
+			DisplayName.Text = selectedPlayer.DisplayName .. " (@" .. selectedPlayer.Name .. ")"
+			local userId = selectedPlayer.UserId
+			local content = Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+			Avatar.Image = content
+		else
+			DisplayName.Text = "Player not found"
+			Avatar.Image = ""
+		end
+	end
+end)
+
+-- Freeze Button Click + Cooldown
+local onCooldown = false
+
+FreezeButton.MouseButton1Click:Connect(function()
+	if selectedPlayer and not onCooldown then
+		onCooldown = true
+		freezeVictimScreen(selectedPlayer)
+
+		local cooldown = 5
+		FreezeButton.Text = "Frozen!"
+		CooldownLabel.Text = cooldown .. "s"
+
+		-- Countdown
+		while cooldown > 0 do
+			wait(1)
+			cooldown -= 1
+			CooldownLabel.Text = cooldown > 0 and (cooldown .. "s") or ""
+		end
+
+		FreezeButton.Text = "Freeze Victim"
+		onCooldown = false
+	end
+end)
